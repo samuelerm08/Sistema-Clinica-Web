@@ -4017,10 +4017,6 @@ input[type=button].btn-block, input[type=reset].btn-block, input[type=submit].bt
         margin-bottom: -1px
     }
 
-li.nav-item:hover {
-    background: black;
-}
-
 .nav-tabs .nav-link {
     border: 1px solid transparent;
     border-top-left-radius: .25rem;

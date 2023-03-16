@@ -43,8 +43,8 @@ namespace SistemaClinicaWeb.App.Areas.Identity.Pages.Account.Manage
 
         public class InputModel
         {
-            [Required]
-            [EmailAddress]
+            [Required(ErrorMessage = "El campo es obligatorio.")]
+            [EmailAddress(ErrorMessage = "Por favor, ingrese un email válido.")]
             [Display(Name = "Nuevo Email")]
             public string NewEmail { get; set; }
         }
@@ -77,10 +77,10 @@ namespace SistemaClinicaWeb.App.Areas.Identity.Pages.Account.Manage
         public async Task<IActionResult> OnPostChangeEmailAsync()
         {
             var user = await _userManager.GetUserAsync(User);
+
             if (user == null)
-            {
                 return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
-            }
+
 
             if (!ModelState.IsValid)
             {
@@ -91,21 +91,21 @@ namespace SistemaClinicaWeb.App.Areas.Identity.Pages.Account.Manage
             var email = await _userManager.GetEmailAsync(user);
             if (Input.NewEmail != email)
             {
-                var userId = await _userManager.GetUserIdAsync(user);
-                var code = await _userManager.GenerateChangeEmailTokenAsync(user, Input.NewEmail);
-                var callbackUrl = Url.Page(
-                    "/Account/ConfirmEmailChange",
-                    pageHandler: null,
-                    values: new { userId = userId, email = Input.NewEmail, code = code },
-                    protocol: Request.Scheme);
-                await _emailSender.SendEmailAsync(
-                    Input.NewEmail,
-                    "Confirm your email",
-                    $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                var newEmail = await _userManager.SetUserNameAsync(user, Input.NewEmail);
+
+                if (!(newEmail.Succeeded))
+                {
+                    StatusMessage = "Error al intentar cambiar el email.";
+                    return RedirectToPage();
+                }
+
+                await _userManager.SetEmailAsync(user, Input.NewEmail);
+                await _signInManager.RefreshSignInAsync(user);
+                StatusMessage = "Tu perfil fue modificado.";
                 return RedirectToPage();
             }
 
-            StatusMessage = "Ingresa un nuevo email para modificar.";
+            StatusMessage = "Por favor, ingresa un email distinto a modificar.";
             return RedirectToPage();
         }
     }
